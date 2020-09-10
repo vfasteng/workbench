@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-system@1.4.0/dist/aframe-physics-system.min.js"></script>
+    <script src="https://unpkg.com/super-hands/dist/super-hands.min.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.1.2/dist/aframe-physics-system.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@^4.1.1/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-extras/dist/aframe-physics-extras.min.js"></script>
+    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+	
+	<script src="reaction_components/clickable.js"></script>
+	<script src="reaction_components/draggable.js"></script>
+	<script src="reaction_components/drag-droppable.js"></script>
+	<script src="reaction_components/hoverable.js"></script>
+	<script src="reaction_components/stretchable.js"></script>
+	<script src="reaction_components/droppable.js"></script>
+	<script src="reaction_components/grabbable.js"></script>
+
+	<script src="components/aframe-ammo-constraints.js"></script>
+
+    <script>
+      // forward mouse and touch events to the super-hands entity
+      AFRAME.registerComponent('capture-mouse', {
+        init: function () {
+          this.eventRepeater = this.eventRepeater.bind(this)
+          this.el.sceneEl.addEventListener('loaded', () => {
+            this.el.sceneEl.canvas.addEventListener('mousedown', this.eventRepeater)
+            this.el.sceneEl.canvas.addEventListener('mouseup', this.eventRepeater)
+            this.el.sceneEl.canvas.addEventListener('touchstart', this.eventRepeater)
+            this.el.sceneEl.canvas.addEventListener('touchmove', this.eventRepeater)
+            this.el.sceneEl.canvas.addEventListener('touchend', this.eventRepeater)
+          }, {once: true})
+        },
+        eventRepeater: function (evt) {
+          if (evt.type.startsWith('touch')) {
+            evt.preventDefault()
+            // avoid repeating touchmove because it interferes with look-controls
+            if (evt.type === 'touchmove') { return }
+          }
+          this.el.emit(evt.type, evt.detail)
+        }
+      })
+    </script>
+	<script src="js/aframe-ammo-constraints.js"></script>
+    <script src="js/aframe-point-component.min.js"></script>
+	
+    <link rel="stylesheet" type="text/css" href="aframe.css">
+  </head>
+  <body>
+    <a-scene environment="preset: contact; dressingAmount: 0; ground: flat; lightPosition: 19 19 19; shadow: true" inspector="url: https://cdn.jsdelivr.net/gh/aframevr/aframe-inspector@master/dist/aframe-inspector.min.js">
+	  <a-assets>
+	  	<a-mixin id="cube" geometry="primitive: box; width: 1.0; height: 1.0; depth: 1.0"
+                     hoverable grabbable stretchable draggable droppable
+                     event-set__hoveron="_event: hover-start; material.opacity: 0.7; transparent: true"
+                     event-set__hoveroff="_event: hover-end; material.opacity: 1; transparent: false"
+                     dynamic-body shadow>
+            </a-mixin>
+            <a-mixin id="controller" super-hands="colliderEvent: collisions;
+                              colliderEventProperty: els;
+                              colliderEndEvent: collisions;
+                              colliderEndEventProperty: clearedEls;
+                              grabStartButtons: gripdown, pointdown, triggerdown;
+                              grabEndButtons: gripup, pointup, triggerup" static-body="shape: sphere; sphereRadius: 0.11" oculus-touch-controls="hand: left" physics-collider collision-filter="collidesWith: default;" collisionForces="false">
+			</a-mixin>
+	  
+		    <a-mixin id="red" material="color: red"></a-mixin>
+		    <a-mixin id="blue" material="color: blue"></a-mixin>
+		    <a-mixin id="cube" geometry="primitive: box"></a-mixin>
+			<a-mixin id="hinge-target" material="color: red"></a-mixin>
+		    <a-mixin id="constraint" material="color: blue"></a-mixin>
+		    <a-mixin id="weight" mass="2.0"></a-mixin>
+			
+		  </a-assets>
+		  
+		  
+		  <a-entity mixin="red cube"></a-entity>
+		  <a-entity mixin="blue cube"></a-entity>
+		  
+      <!--<a-entity id="orange" point="size:3; color:orange; perspective: true;" position="0 1 -3"></a-entity>-->
+      <!-- POINT TO POINT --example
+      <a-entity position="4 3 -1">
+        <a-text value="Point to Point" position="0 1.5 0" align="center"></a-text>
+        <a-box id="pointtopoint-target"
+               color="#777"
+               position="0 0 0"
+               scale="1 1 1"
+               static-body>
+        </a-box>
+        <a-box color="#F00"
+               position="0 0 0"
+               scale="1 1 1"
+               dynamic-body
+               constraint="type: pointToPoint;
+                           target: #pointtopoint-target;
+                           pivot: 0 -1 0;
+                           targetPivot: 0 1 0">
+        </a-box>
+      </a-entity>
+	  <a-entity position="0 2 -2" rotation="0 0 0" >
+		<a-box scale="0.5 0.5 0.5" color="black" position="0 0 0">
+			<a-point id="p2p-target" static-body size="1" color="black" position="0 0 0"></a-point>
+		</a-box>
+	  </a-entity>--
+	  <a-entity id="p2p" position="0 2 -2" static-body>
+	  	<a-box scale="1 1 1" color="black" position="0 0 0">
+	    	<a-entity>
+				  <a-sphere scale="0.5 0.5 0.5" color="blue" position="0 0 1"></a-sphere>
+			  	  <a-sphere scale="0.5 0.5 0.5" color="blue" position="0 0 -1"></a-sphere>
+				  <a-sphere scale="0.5 0.5 0.5" color="green" position="1 0 0"></a-sphere>
+				  <a-sphere scale="0.5 0.5 0.5" color="green" position="-1 0 0"></a-sphere>
+				  <a-sphere scale="0.5 0.5 0.5" color="red" position="0 1 0"></a-sphere>
+				  <a-sphere scale="0.5 0.5 0.5" color="red" position="0 -1 0"></a-sphere>
+				
+			</a-entity>
+		  </a-box>
+	  </a-entity>
+	  <!-- HINGE PIN working-->
+        <a-entity position="0 2 -5">
+
+            <a-cylinder id="hinge3-target" position="0 0.1 0 " color="#777" static-body radius="0.5" height="0.1">
+
+            </a-cylinder>
+            <a-entity class="cube" mixin="cube" position="0 0 0" material="color: yellow"
+                      constraint="type: hinge;
+                           target: #hinge3-target;
+                           axis: 0 1 0;
+                           targetAxis: 0 1 0;
+                           pivot: 0 0.1 0;
+                           targetPivot: 0 -0.5 0;"></a-entity>
+        </a-entity>
+    </a-scene>
+	<!--<script>
+	element.components.point.setPoints([
+    [0,0,0]
+    [1,0,0]
+    [-1,0,0]
+    [0,0,1]
+    [0,0,-1]
+  ])
+  
+  element.components.point.setPoints([
+    [0,0,0]
+    [1,1,0]
+    [-1,1,0]
+	
+    [0,0,1]
+    [0,0,-1]
+	
+  ])
+	</script>-->
+    <script>
+      var points = document.querySelector("#orange");
+      setTimeout(function(){
+        points.components.point.setPoints(Array(20).fill(0).map(function(a,i){ return [i-10,i-10,i-10]; }))
+      },100)
+    </script>
+  </body>
+</html>
+<!--
+Match Daydream controller if present, regardless of hand.
+
+<a-entity daydream-controls></a-entity>
+Match Daydream controller if present and for specified hand.
+
+<a-entity daydream-controls="hand: left"></a-entity>
+<a-entity daydream-controls="hand: right"></a-entity>
+The gearvr-controls component interfaces with the Samsung/Oculus Gear VR controllers. It wraps the tracked-controls component while adding button mappings, events, and a Gear VR controller model that highlights the touched and/or pressed buttons (trackpad, trigger).
+
+<!-- Match Gear VR controller if present, regardless of hand. ->
+<a-entity gearvr-controls></a-entity>
+<!-- Match Gear VR controller if present and for specified hand. ->
+<a-entity gearvr-controls="hand: left"></a-entity>
+<a-entity gearvr-controls="hand: right"></a-entity>
+
+The vive-controls component interfaces with the HTC Vive controllers/wands. It wraps the tracked-controls component while adding button mappings, events, and a Vive controller model that highlights the pressed buttons (trigger, grip, menu, system) and trackpad.
+
+<a-entity vive-controls="hand: left"></a-entity>
+<a-entity vive-controls="hand: right"></a-entity>
+A-Frame 0.x0.5
+Oculus touch controllers
+#
+The oculus-touch-controls component interfaces with the Oculus Touch controllers. It wraps the tracked-controls component while adding button mappings, events, and a Touch controller model.
+
+<a-entity oculus-touch-controls="hand: left"></a-entity>
+<a-entity oculus-touch-controls="hand: right"></a-entity>
+
+<html>
+  <head>
+    <title>A-Frame Point Component - Basic</title>
+    <meta name="description" content="Basic example for Point component."></meta>
+	<script src='https://cdn.jsdelivr.net/npm/webxr-polyfill@latest/build/webxr-polyfill.js'></script> 
+	<script src="https://agent.webvr.rocks/client.js" async defer></script>
+	
+	 <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-system@1.4.0/dist/aframe-physics-system.min.js"></script>
+    <script src="https://unpkg.com/super-hands/dist/super-hands.min.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.1.2/dist/aframe-physics-system.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@^4.1.1/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-extras/dist/aframe-physics-extras.min.js"></script>
+    <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
+
+	<script src="//unpkg.com/xterm@3.12.0/dist/xterm.js"></script>
+
+<script src="//unpkg.com/aframe-xterm-component@1.0.1/aframe-xterm-component.js"></script>
+<script src="//unpkg.com/xterm-js-shell@1.1.3/bundle.js"></script>
+<script src="https://ranger.mauve.moe/dat-xr-scene-ide//editor-terminal.js"></script>
+	<script src="reaction_components/clickable.js"></script>
+	<script src="reaction_components/draggable.js"></script>
+	<script src="reaction_components/drag-droppable.js"></script>
+	<script src="reaction_components/hoverable.js"></script>
+	<script src="reaction_components/stretchable.js"></script>
+	<script src="reaction_components/droppable.js"></script>
+	<script src="reaction_components/grabbable.js"></script>
+
+	
+
+    
+
